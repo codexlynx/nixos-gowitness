@@ -110,7 +110,7 @@ in
         --port ${toString cfg.port} \
         --screenshot-path ${cfg.screenshotPath} \
         ${if cfg.debug then "--debug-log \\" else ""}
-        ${if cfg.quiet then "--quiet \\" else ""}
+        ${if cfg.quiet then "--quiet" else ""}
       '';
     };
 

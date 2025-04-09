@@ -24,23 +24,26 @@
   };
 
   outputs =
-    { nixpkgs, std, ... }@inputs:
+    inputs@{ self, ... }:
     let
-      pkgs = import nixpkgs { system = "x86_64-linux"; };
+      pkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
     in
-    std.growOn
+    inputs.std.growOn
       {
         inherit inputs;
 
         cellsFrom = ./cells;
 
         cellBlocks = [
-          (std.blockTypes.nixostests "tests" { ci.run = true; })
+          (inputs.std.blockTypes.nixostests "tests" { ci.run = true; })
         ];
       }
       {
         formatter."x86_64-linux" = pkgs.nixfmt-rfc-style;
 
-        nixosModules.default = import ./module.nix { };
+        nixosModules = {
+          default = self.nixosModules.gowitness;
+          gowitness = ./module.nix;
+        };
       };
 }

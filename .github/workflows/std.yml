@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: std-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  discover:
+    outputs:
+      hits: ${{ steps.discovery.outputs.hits }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: nixbuild/nix-quick-install-action@v25
+      - uses: divnix/std-action/discover@main
+        id: discovery
+
+  tests:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    needs: [discover]
+    if: fromJSON(needs.discover.outputs.hits).tests.run != '{}'
+    strategy:
+      matrix:
+        target: ${{ fromJSON(needs.discover.outputs.hits).tests.run }}
+    name: ${{ matrix.target.jobName }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: nixbuild/nix-quick-install-action@v25
+      - uses: divnix/std-action/run@main
